@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ⚙️ Manthan Platform — Decision Execution Layer
 
 Manthan Platform is the execution and enforcement layer of the Manthan Decision Operating System.
@@ -123,5 +124,120 @@ The execution system that:
 - enforces outcomes automatically
 - and guarantees replayable truth
 🔐 System Identity
+=======
+# 🧭 Manthan App — Overview
+
+Manthan App is the **human interface layer** of the Manthan system.
+
+While the Platform executes decisions, the App enables humans to:
+
+- see decisions
+- understand decisions
+- audit decisions
+- trust decisions
+
+---
+
+## 🧠 What is Manthan App?
+
+Manthan App is a UI system that sits on top of:
+
+- Manthan Platform (execution)
+- Decision Log (Supabase)
+
+It provides visibility into the decision system.
+
+---
+
+## 🔒 Core Principle
+
+```text
+The App must NEVER influence decisions — only observe them
+📦 Responsibilities
+
+Manthan App is responsible for:
+
+displaying decisions
+showing contract data
+visualizing decision history
+enabling replay inspection
+🚫 Non-Responsibilities
+
+Manthan App must NOT:
+
+execute decisions
+modify decisions
+affect evaluation logic
+write to decision log (except controlled metadata in future)
+🧩 Architecture Position
+User
+  ↓
+Manthan App (UI)
+  ↓
+Manthan Platform (Execution)
+  ↓
+Decision Log (Truth)
+🔁 Data Flow
+Decision Log (Supabase)
+        ↓
+API Layer (read-only)
+        ↓
+App UI
+        ↓
+User
+🧠 Key Features (v0.1)
+1. Decision Explorer
+list all decisions
+filter by repo / action
+2. Decision Detail View
+contract
+config
+result
+3. Replay Viewer
+show replay status
+highlight mismatches (future)
+4. Timeline View
+chronological decision flow
+🔐 Data Model
+
+App reads from:
+
+table: decisions
+
+Fields:
+
+id
+contract
+result
+config
+created_at
+⚙️ Tech Stack (Planned)
+React (UI)
+Next.js (routing)
+Tailwind (styling)
+Supabase client (read-only)
+🔒 Constraints
+read-only access to DB
+no mutation of decisions
+no direct core interaction
+no business logic in UI
+🧠 Design Philosophy
+Make decisions visible, not editable
+🧭 Version
+
+Manthan App v0.1 — Initial Spec
+
+🏁 Summary
+
+Manthan App provides:
+
+visibility
+transparency
+auditability
+
+It completes the system by making decisions understandable to humans.
+
+🔐 Identity
+>>>>>>> 2021894 (Manthan App v0.1 — UI Layer (Read-only))
 
 Every decision is traceable, auditable, and built for trust.
