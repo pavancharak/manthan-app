@@ -1,0 +1,13 @@
+{
+  "id": "cli-1",
+  "intent": "test",
+  "inputs": {},
+  "outputs": {},
+  "behavior": "noop",
+  "determinism": "strict",
+  "boundaries": [],
+  "metadata": {
+    "created_at": "2026-01-01",
+    "version": "v1"
+  }
+}
