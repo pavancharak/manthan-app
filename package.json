@@ -1,8 +1,20 @@
 {
-  "name": "manthan-core",
+  "name": "manthan-app",
   "version": "1.0.0",
+  "main": "dist/adapters/github/server.js",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
-    "dev": "ts-node-dev src/index.ts"
+    "build": "tsc",
+    "start": "node dist/adapters/github/server.js",
+    "dev": "ts-node-dev adapters/github/server.ts"
+  },
+  "dependencies": {
+    "@octokit/rest": "^22.0.1",
+    "body-parser": "^2.2.2",
+    "express": "^5.2.1",
+    "jsonwebtoken": "^9.0.3"
   },
   "devDependencies": {
     "@types/express": "^5.0.6",
@@ -10,12 +22,6 @@
     "@types/node": "^20.19.37",
     "ts-node": "^10.x",
     "ts-node-dev": "^2.x",
-    "typescript": "^5.x"
-  },
-  "dependencies": {
-    "@octokit/rest": "^22.0.1",
-    "body-parser": "^2.2.2",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3"
+    "typescript": "^5.9.3"
   }
 }

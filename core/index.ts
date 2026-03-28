@@ -1,15 +1,14 @@
 import { evaluate } from "./engine/evaluate"
 import { appendDecision } from "./store/decision.store"
-import { enforce } from "./enforcement/enforce"
 import { DecisionContract } from "./types/decision"
 
 export function runDecision(contract: DecisionContract) {
-  const result = evaluate(contract)
+  const decision = evaluate(contract)
 
   appendDecision({
     contract,
-    result
+    result: decision
   })
 
-  return enforce(result)
+  return decision
 }

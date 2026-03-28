@@ -6,7 +6,9 @@ import { DecisionContract } from "../../core/types/decision"
 import { getOctokit } from "./githubClient"
 
 const app = express()
-app.use(bodyParser.json())
+
+// Prevent large payload crashes
+app.use(bodyParser.json({ limit: "1mb" }))
 
 // Health check
 app.get("/", (_, res) => {
@@ -17,13 +19,16 @@ app.get("/", (_, res) => {
 app.post("/webhooks/github", async (req, res) => {
   try {
     const event = req.headers["x-github-event"]
+    console.log("Received event:", event)
 
-    // Only process PR events
     if (event !== "pull_request") {
       return res.status(200).send("Ignored")
     }
 
     const payload = req.body
+    // DEBUG LOGS
+console.log("Repo:", payload.repository.full_name)
+console.log("Installation:", payload.installation?.id)
     const action = payload.action
     const pr = payload.pull_request
 
@@ -31,7 +36,6 @@ app.post("/webhooks/github", async (req, res) => {
       return res.status(400).send("No PR data")
     }
 
-    // Build Decision Contract
     const contract: DecisionContract = {
       id: `pr-${pr.id}`,
       intent: `PR ${action}`,
@@ -49,19 +53,18 @@ app.post("/webhooks/github", async (req, res) => {
       }
     }
 
-    // Run through Manthan Core
     const decision = runDecision(contract)
 
     console.log("PR Decision:", decision)
 
-    // Post comment back to PR
-    const octokit = await getOctokit()
+    const installationId = payload.installation.id
+const octokit = await getOctokit(installationId)
 
     await octokit.issues.createComment({
       owner: payload.repository.owner.login,
       repo: payload.repository.name,
       issue_number: pr.number,
-      body: `Manthan Decision: **${decision.action}**`
+      body: `Manthan Decision: **${decision.action}**\n\n${decision.reason}`
     })
 
     return res.status(200).json({
@@ -76,8 +79,8 @@ app.post("/webhooks/github", async (req, res) => {
 })
 
 // Start server
-const PORT = 4000
+const PORT = Number(process.env.PORT) || 8080
 
-app.listen(PORT, () => {
-  console.log(`GitHub Adapter running on http://localhost:${PORT}`)
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`GitHub Adapter running on port ${PORT}`)
 })

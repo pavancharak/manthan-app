@@ -1,17 +1,16 @@
 {
   "compilerOptions": {
-    "target": "ES2019",
-    "module": "CommonJS",
+    "target": "ES2020",
+    "module": "commonjs",
     "moduleResolution": "node",
+    "rootDir": ".",
+    "outDir": "dist",
     "esModuleInterop": true,
-    "resolveJsonModule": true,
     "strict": true,
-    "types": ["node"],
-    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "rootDir": "./src",
-    "outDir": "./dist"
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true
   },
-  "include": ["src"],
+  "include": ["core/**/*", "adapters/**/*"],
   "exclude": ["node_modules"]
 }
