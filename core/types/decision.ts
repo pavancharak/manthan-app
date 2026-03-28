@@ -9,5 +9,6 @@ export type DecisionContract = {
   metadata: {
     created_at: string
     version: string
+    repo?: string
   }
 }

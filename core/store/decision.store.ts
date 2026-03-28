@@ -1,51 +1,51 @@
-import fs from "fs"
-import path from "path"
-import crypto from "crypto"
+import { supabase } from "../../services/supabase";
 
-const LOG_FILE = path.join(__dirname, "../../decision.log")
+// IDEMPOTENCY — return full stored decision (NOT boolean)
+export async function hasDecision(contractId: string) {
+  const { data, error } = await supabase
+    .from("decisions")
+    .select("*")
+    .eq("id", contractId)
+    .maybeSingle();
 
-function hash(data: string) {
-  return crypto.createHash("sha256").update(data).digest("hex")
-}
-
-function getLastHash(): string {
-  if (!fs.existsSync(LOG_FILE)) return "GENESIS"
-
-  const lines = fs.readFileSync(LOG_FILE, "utf-8")
-    .split("\n")
-    .filter(Boolean)
-
-  if (lines.length === 0) return "GENESIS"
-
-  const last = JSON.parse(lines[lines.length - 1])
-  return last.hash || "GENESIS"
-}
-
-export function appendDecision(entry: any) {
-  const prevHash = getLastHash()
-
-  const payload = {
-    ...entry,
-    prevHash
+  if (error && error.code !== "PGRST116") {
+    throw error;
   }
 
-  const dataString = JSON.stringify(payload)
-
-  const entryHash = hash(dataString)
-
-  const finalEntry = {
-    ...payload,
-    hash: entryHash
-  }
-
-  fs.appendFileSync(LOG_FILE, JSON.stringify(finalEntry) + "\n", "utf-8")
+  return data || null;
 }
 
-export function getLog() {
-  if (!fs.existsSync(LOG_FILE)) return []
+// Append decision with FULL SNAPSHOT (contract + result + config)
+export async function appendDecision(entry: {
+  contract: any;
+  result: any;
+  config: any;
+}) {
+  const { error } = await supabase
+    .from("decisions")
+    .insert([
+      {
+        id: entry.contract.id,
+        contract: entry.contract,
+        result: entry.result,
+        config: entry.config,
+      },
+    ]);
 
-  return fs.readFileSync(LOG_FILE, "utf-8")
-    .split("\n")
-    .filter(Boolean)
-    .map((line: string) => JSON.parse(line))
+  if (error) {
+    throw error;
+  }
+}
+
+// Read all decisions (used in replay)
+export async function getLog() {
+  const { data, error } = await supabase
+    .from("decisions")
+    .select("*");
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
 }

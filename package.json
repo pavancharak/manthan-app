@@ -1,5 +1,5 @@
 {
-  "name": "manthan-app",
+  "name": "manthan-platform",
   "version": "1.0.0",
   "main": "dist/adapters/github/server.js",
   "engines": {
@@ -12,7 +12,9 @@
   },
   "dependencies": {
     "@octokit/rest": "^22.0.1",
+    "@supabase/supabase-js": "^2.100.1",
     "body-parser": "^2.2.2",
+    "dotenv": "^17.3.1",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3"
   },

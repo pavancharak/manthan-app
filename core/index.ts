@@ -1,14 +1,31 @@
 import { evaluate } from "./engine/evaluate"
-import { appendDecision } from "./store/decision.store"
+import { appendDecision, hasDecision } from "./store/decision.store"
 import { DecisionContract } from "./types/decision"
+import { getRepoConfig } from "./config/getConfig"
 
-export function runDecision(contract: DecisionContract) {
-  const decision = evaluate(contract)
+export async function runDecision(
+  contract: DecisionContract,
+  repo: string
+) {
+  // IDEMPOTENCY
+  const existing = await hasDecision(contract.id);
 
-  appendDecision({
+  if (existing) {
+    return existing.result;
+  }
+
+  // LOAD CONFIG (PURE)
+  const config = getRepoConfig(repo);
+
+  // EVALUATE
+  const decision = evaluate(contract, config);
+
+  // STORE SNAPSHOT
+  await appendDecision({
     contract,
-    result: decision
-  })
+    result: decision,
+    config
+  });
 
-  return decision
+  return decision;
 }

@@ -1,54 +1,47 @@
-import fs from "fs"
-import path from "path"
-import crypto from "crypto"
-import { evaluate } from "./engine/evaluate"
+import { evaluate } from "./engine/evaluate";
+import { supabase } from "../services/supabase";
 
-const LOG_FILE = path.join(__dirname, "../decision.log")
+export async function replayAndVerify() {
+  const { data: decisions, error } = await supabase
+    .from("decisions")
+    .select("*")
+    .order("created_at", { ascending: true });
 
-function hash(data: string): string {
-  return crypto.createHash("sha256").update(data).digest("hex")
-}
-
-export function replayAndVerify() {
-  if (!fs.existsSync(LOG_FILE)) {
-    console.log("No decision log found")
-    return
+  if (error) {
+    console.error("Failed to fetch decisions:", error);
+    return;
   }
 
-  const lines = fs.readFileSync(LOG_FILE, "utf-8")
-    .split("\n")
-    .filter(Boolean)
-
-  let prevHash = "GENESIS"
-
-  for (let i = 0; i < lines.length; i++) {
-    const entry = JSON.parse(lines[i])
-
-    // 1. Verify chain linkage
-    if (entry.prevHash !== prevHash) {
-      console.error(`Chain broken at entry ${i}`)
-      return
-    }
-
-    // 2. Verify hash integrity
-    const { hash: storedHash, ...rest } = entry
-    const recomputedHash = hash(JSON.stringify(rest))
-
-    if (storedHash !== recomputedHash) {
-      console.error(`Hash mismatch at entry ${i}`)
-      return
-    }
-
-    // 3. Verify determinism
-    const recomputedResult = evaluate(entry.contract)
-
-    if (JSON.stringify(recomputedResult) !== JSON.stringify(entry.result)) {
-      console.error(`Determinism violated at entry ${i}`)
-      return
-    }
-
-    prevHash = storedHash
+  if (!decisions || decisions.length === 0) {
+    console.log("No decisions found in DB");
+    return;
   }
 
-  console.log("All decisions verified. System is consistent.")
+  for (let i = 0; i < decisions.length; i++) {
+    const entry = decisions[i];
+
+    const contract = entry.contract;
+    const config = entry.config;
+
+    // STRICT: config must exist
+    if (!config) {
+      console.error(`Determinism violated at entry ${i} (missing config)`);
+      return;
+    }
+
+    const recomputed = evaluate(contract, config);
+
+    const normalize = (obj: any) =>
+  JSON.stringify(Object.keys(obj).sort().reduce((acc: any, key) => {
+    acc[key] = obj[key];
+    return acc;
+  }, {}));
+
+if (normalize(recomputed) !== normalize(entry.result)) {
+      console.error(`Determinism violated at entry ${i}`);
+      return;
+    }
+  }
+
+  console.log("All decisions verified. System is consistent.");
 }

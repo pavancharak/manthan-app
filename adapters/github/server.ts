@@ -1,3 +1,4 @@
+import "dotenv/config"
 import express from "express"
 import bodyParser from "body-parser"
 
@@ -6,8 +7,6 @@ import { DecisionContract } from "../../core/types/decision"
 import { getOctokit } from "./githubClient"
 
 const app = express()
-
-// Prevent large payload crashes
 app.use(bodyParser.json({ limit: "1mb" }))
 
 // Health check
@@ -26,9 +25,13 @@ app.post("/webhooks/github", async (req, res) => {
     }
 
     const payload = req.body
-    // DEBUG LOGS
-console.log("Repo:", payload.repository.full_name)
-console.log("Installation:", payload.installation?.id)
+
+    // Extract repo (IMPORTANT)
+    const repoFull = payload.repository.full_name
+
+    console.log("Repo:", repoFull)
+    console.log("Installation:", payload.installation?.id)
+
     const action = payload.action
     const pr = payload.pull_request
 
@@ -49,23 +52,55 @@ console.log("Installation:", payload.installation?.id)
       boundaries: [],
       metadata: {
         created_at: new Date().toISOString(),
-        version: "v1"
+        version: "v1",
+        repo: payload.repository.full_name
       }
     }
 
-    const decision = runDecision(contract)
+    // PASS repo into core
+    const decision = await runDecision(contract, repoFull)
+
+    // Idempotency skip
+    if (decision.action === "SKIP") {
+      console.log("Skipping duplicate decision")
+
+      return res.status(200).json({
+        status: "duplicate",
+        decision
+      })
+    }
 
     console.log("PR Decision:", decision)
 
-    const installationId = payload.installation.id
-const octokit = await getOctokit(installationId)
+    const installationId = payload.installation?.id
 
-    await octokit.issues.createComment({
-      owner: payload.repository.owner.login,
-      repo: payload.repository.name,
-      issue_number: pr.number,
-      body: `Manthan Decision: **${decision.action}**\n\n${decision.reason}`
-    })
+    if (!installationId) {
+      console.log("No installation ID — skipping GitHub comment")
+
+      return res.status(200).json({
+        status: "skipped",
+        reason: "No installation ID",
+        decision
+      })
+    }
+
+    const octokit = await getOctokit(installationId)
+
+    const owner =
+  payload.repository?.owner?.login ||
+  payload.repository?.full_name?.split("/")[0] ||
+  "unknown";
+
+const repo =
+  payload.repository?.name ||
+  payload.repository?.full_name?.split("/")[1];
+
+await octokit.issues.createComment({
+  owner,
+  repo,
+  issue_number: pr.number || pr.id,
+  body: `Manthan Decision: **${decision.action}**\n\n${decision.reason}`
+})
 
     return res.status(200).json({
       status: "commented",

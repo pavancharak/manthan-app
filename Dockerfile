@@ -1,20 +1,20 @@
-# Use lightweight Node image
-FROM node:20-alpine
+# Use Node
+FROM node:20
 
 WORKDIR /app
 
-# Install dependencies
+# Install deps
 COPY package*.json ./
-RUN npm install --omit=dev
+RUN npm install
 
-# Copy source
+# Copy code
 COPY . .
 
-# Build TypeScript → JavaScript
+# Build TS
 RUN npm run build
 
 # Expose port
 EXPOSE 8080
 
-# Start compiled app
+# Start compiled JS (NOT ts-node)
 CMD ["node", "dist/adapters/github/server.js"]
