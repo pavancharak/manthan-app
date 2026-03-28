@@ -1,0 +1,13 @@
+{
+  "name": "manthan-core",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "ts-node-dev src/index.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.37",
+    "ts-node": "^10.x",
+    "ts-node-dev": "^2.x",
+    "typescript": "^5.x"
+  }
+}
