@@ -12,7 +12,7 @@
 
 \## What is Manthan Core?
 
-
+xx
 
 Manthan Core is a minimal system that:
 
